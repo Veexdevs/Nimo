@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'auth.dart';
 import 'data.dart';
+import 'profile.dart';
 import 'theme.dart';
 import 'zoom.dart';
 
@@ -420,7 +421,7 @@ class GuestBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 18, 10, 18),
+      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
       decoration: BoxDecoration(
         color: NimoColors.surface,
         borderRadius: BorderRadius.circular(22),
@@ -435,45 +436,54 @@ class GuestBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF17171B),
-              border: Border.all(color: const Color(0xFF232328)),
-            ),
-            child: const Icon(
-              Icons.person_outline,
-              size: 26,
-              color: NimoColors.textMuted,
-            ),
-          ),
-          const SizedBox(width: 13),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Visitante',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+            child: Pressable(
+              onTap: () => Navigator.of(context).push(profileRoute()),
+              child: Row(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF17171B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF232328)),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      size: 30,
+                      color: NimoColors.textMuted,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Entre ou crie uma conta',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: NimoColors.textMuted,
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Visitante',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Toque para ver seu perfil',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: NimoColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Pressable(
