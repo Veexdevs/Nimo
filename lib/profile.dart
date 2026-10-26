@@ -127,32 +127,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               _identity(logged, p),
                               const SizedBox(height: 22),
+                              _bioCard(logged, p),
+                              const SizedBox(height: 14),
                               _card(
                                 title: 'MINHA CONTA',
                                 rows: [
-                                  _InfoRow(
-                                    icon: Icons.person_outline,
-                                    label: 'Nome de exibição',
-                                    value: logged
-                                        ? ((p?.displayName
-                                                    ?.trim()
-                                                    .isNotEmpty ??
-                                                false)
-                                            ? p!.displayName!
-                                            : 'Não definido')
-                                        : 'Não definido',
-                                  ),
-                                  _InfoRow(
-                                    icon: Icons.alternate_email,
-                                    label: 'Nome único',
-                                    value: logged
-                                        ? (p != null
-                                            ? '@${p.username}'
-                                            : '...')
-                                        : 'Não definido',
-                                    note:
-                                        'Pode ser alterado a cada 7 dias',
-                                  ),
                                   _InfoRow(
                                     icon: Icons.mail_outline,
                                     label: 'E-mail',
@@ -191,14 +170,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ] else ...[
                                 _primaryButton(
                                   'Criar conta',
-                                  () => Navigator.of(context)
-                                      .push(authRoute(signup: true)),
+                                  () => goToAuth(context, signup: true),
                                 ),
                                 const SizedBox(height: 12),
                                 _outlineButton(
                                   'Entrar',
-                                  () => Navigator.of(context)
-                                      .push(authRoute()),
+                                  () => goToAuth(context),
                                 ),
                               ],
                               const SizedBox(height: 26),
@@ -431,6 +408,153 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ],
     ).animate().fadeIn(duration: 320.ms, delay: 60.ms);
+  }
+
+  // ----------------------------------------------------------
+  // Bio
+  // ----------------------------------------------------------
+  Future<void> _editBio() async {
+    if (!isLoggedIn) {
+      _snack('Crie uma conta para escrever sua bio.');
+      return;
+    }
+    final ctrl = TextEditingController(text: _profile?.bio ?? '');
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: const Color(0xFF101014),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 18,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Sua bio',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: ctrl,
+              maxLines: 4,
+              maxLength: 190,
+              autofocus: true,
+              cursorColor: NimoColors.blueBright,
+              style: GoogleFonts.inter(
+                  fontSize: 15, color: NimoColors.textNormal),
+              decoration: InputDecoration(
+                hintText: 'Conte algo sobre você...',
+                hintStyle: GoogleFonts.inter(
+                    fontSize: 15, color: NimoColors.textFaint),
+                counterStyle: GoogleFonts.inter(
+                    fontSize: 11.5, color: NimoColors.textFaint),
+                filled: true,
+                fillColor: NimoColors.field,
+                contentPadding: const EdgeInsets.all(16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(true),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: NimoColors.blue,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Salvar bio',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved == true) {
+      try {
+        await updateBio(ctrl.text);
+        await _load();
+        if (mounted) _snack('Bio atualizada!');
+      } catch (_) {
+        if (mounted) _snack('Não foi possível salvar a bio.');
+      }
+    }
+    ctrl.dispose();
+  }
+
+  Widget _bioCard(bool logged, NimoProfile? p) {
+    final hasBio = (p?.bio?.trim().isNotEmpty ?? false);
+    return GestureDetector(
+      onTap: _editBio,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          color: NimoColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: NimoColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'BIO',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: NimoColors.textMuted,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.edit_outlined,
+                    size: 16, color: NimoColors.textMuted),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasBio
+                  ? p!.bio!
+                  : (logged
+                      ? 'Toque para escrever sua bio.'
+                      : 'Crie uma conta para ter uma bio.'),
+              style: GoogleFonts.inter(
+                fontSize: 14.5,
+                height: 1.45,
+                color: hasBio
+                    ? NimoColors.textNormal
+                    : NimoColors.textFaint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 320.ms, delay: 100.ms);
   }
 
   // ----------------------------------------------------------

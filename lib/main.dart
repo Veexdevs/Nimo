@@ -10,12 +10,27 @@ import 'auth.dart';
 import 'backend.dart';
 import 'data.dart';
 import 'profile.dart';
+import 'status.dart';
 import 'theme.dart';
+import 'weblinks.dart';
 import 'zoom.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  // Sessão vinda do subdomínio de login (#nimo_rt=...)
+  if (kIsWeb) {
+    final frag = Uri.base.fragment;
+    if (frag.startsWith('nimo_rt=')) {
+      final rt = Uri.decodeComponent(frag.substring('nimo_rt='.length));
+      try {
+        await supa.auth.setSession(rt);
+      } catch (_) {}
+      cleanUrlFragment();
+    }
+  }
+
   runApp(const NimoApp());
 }
 
@@ -67,11 +82,53 @@ class NimoApp extends StatelessWidget {
       home: StreamBuilder<AuthState>(
         stream: supa.auth.onAuthStateChange,
         builder: (context, _) {
-          if (_isLoginHost && !isLoggedIn) {
-            return const AuthScreen(standalone: true);
+          if (_isLoginHost) {
+            if (isLoggedIn) {
+              // já logado no subdomínio: manda para o app principal
+              return const _RedirectToApp();
+            }
+            final wantsSignup =
+                kIsWeb && Uri.base.fragment.contains('signup');
+            return AuthScreen(standalone: true, startSignup: wantsSignup);
           }
           return const HomeScreen();
         },
+      ),
+    );
+  }
+}
+
+/// Mostra um carregando e leva a sessão do subdomínio para o app
+class _RedirectToApp extends StatefulWidget {
+  const _RedirectToApp();
+
+  @override
+  State<_RedirectToApp> createState() => _RedirectToAppState();
+}
+
+class _RedirectToAppState extends State<_RedirectToApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rt = supa.auth.currentSession?.refreshToken;
+      if (rt != null) {
+        gotoUrl('$nimoAppUrl/#nimo_rt=${Uri.encodeComponent(rt)}');
+      } else {
+        gotoUrl(nimoAppUrl);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: NimoColors.black,
+      body: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2.5,
+          color: NimoColors.blue,
+        ),
       ),
     );
   }
@@ -230,6 +287,7 @@ class MessagesPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
         _Header(),
+        StatusStrip(),
         Expanded(child: EmptyConversations()),
       ],
     );
@@ -399,7 +457,7 @@ class EmptyConversations extends StatelessWidget {
                     ),
                   );
                 } else {
-                  Navigator.of(context).push(authRoute(signup: true));
+                  goToAuth(context, signup: true);
                 }
               },
               child: Container(
@@ -570,7 +628,7 @@ class _GuestBarState extends State<GuestBar> {
           ),
           if (!logged) ...[
             Pressable(
-              onTap: () => Navigator.of(context).push(authRoute()),
+              onTap: () => goToAuth(context),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 11),

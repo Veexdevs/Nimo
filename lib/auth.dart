@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show Uint8List;
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,8 +6,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'backend.dart';
+import 'cropper.dart';
+import 'datepicker.dart';
 import 'theme.dart';
+import 'weblinks.dart';
 import 'zoom.dart';
+
+/// Abre a autenticação do jeito certo:
+/// na web vai para o subdomínio de login; no app abre a tela interna.
+void goToAuth(BuildContext context, {bool signup = false}) {
+  if (kIsWeb) {
+    gotoUrl('$nimoLoginUrl/#${signup ? 'signup' : 'login'}');
+  } else {
+    Navigator.of(context).push(authRoute(signup: signup));
+  }
+}
 
 /// Transição suave para a tela de autenticação
 Route authRoute({bool signup = false}) => PageRouteBuilder(
@@ -167,25 +180,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _pickBirth() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year - 18, now.month, now.day),
-      firstDate: DateTime(1920),
-      lastDate: now,
-      helpText: 'Data de nascimento',
-      cancelText: 'Cancelar',
-      confirmText: 'OK',
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: NimoColors.blue,
-            surface: Color(0xFF131317),
-          ),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await showNimoDatePicker(context, initial: _birth);
     if (picked != null) {
       setState(() {
         _birth = picked;
@@ -199,17 +194,28 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       final file = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: banner ? 1600 : 800,
-        imageQuality: 88,
+        maxWidth: banner ? 2400 : 1600,
+        imageQuality: 92,
       );
       if (file == null) return;
       final bytes = await file.readAsBytes();
       if (!mounted) return;
+
+      // editor com zoom (slider) e posição (arrastar)
+      final cropped = await showImageCropper(
+        context,
+        bytes,
+        aspect: banner ? 8 / 3 : 1,
+        outWidth: banner ? 1280 : 512,
+        title: banner ? 'Ajustar banner' : 'Ajustar foto de perfil',
+      );
+      if (cropped == null || !mounted) return;
+
       setState(() {
         if (banner) {
-          _bannerBytes = bytes;
+          _bannerBytes = cropped;
         } else {
-          _avatarBytes = bytes;
+          _avatarBytes = cropped;
         }
       });
     } catch (_) {
@@ -257,6 +263,14 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _finishAuth(String message) {
+    // Login feito no subdomínio: leva a sessão para o app principal
+    if (widget.standalone && kIsWeb) {
+      final rt = supa.auth.currentSession?.refreshToken;
+      if (rt != null) {
+        gotoUrl('$nimoAppUrl/#nimo_rt=${Uri.encodeComponent(rt)}');
+        return;
+      }
+    }
     _snack(message);
     final nav = Navigator.of(context);
     if (nav.canPop()) {

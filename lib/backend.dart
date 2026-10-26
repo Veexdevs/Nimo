@@ -20,6 +20,7 @@ class NimoProfile {
   final String? country;
   final String? avatarUrl;
   final String? bannerUrl;
+  final String? bio;
   final DateTime? createdAt;
   final String? email;
 
@@ -30,6 +31,7 @@ class NimoProfile {
     this.country,
     this.avatarUrl,
     this.bannerUrl,
+    this.bio,
     this.createdAt,
     this.email,
   });
@@ -47,6 +49,7 @@ class NimoProfile {
       country: m['country'] as String?,
       avatarUrl: m['avatar_url'] as String?,
       bannerUrl: m['banner_url'] as String?,
+      bio: m['bio'] as String?,
       createdAt: m['created_at'] != null
           ? DateTime.tryParse(m['created_at'] as String)
           : null,
@@ -66,6 +69,15 @@ Future<NimoProfile?> fetchMyProfile() async {
       .maybeSingle();
   if (data == null) return null;
   return NimoProfile.fromMap(data, email: user.email);
+}
+
+/// Atualiza a bio do usuário logado
+Future<void> updateBio(String bio) async {
+  final user = supa.auth.currentUser;
+  if (user == null) return;
+  await supa.from('profiles').update({
+    'bio': bio.trim().isEmpty ? null : bio.trim(),
+  }).eq('id', user.id);
 }
 
 /// Verifica se um nome único está disponível
