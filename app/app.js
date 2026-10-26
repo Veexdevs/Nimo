@@ -46,13 +46,26 @@ document.querySelectorAll(".channel").forEach((ch) => {
   });
 });
 
-// Troca de servidor ativo (visual)
+// Troca de servidor ativo (visual) + alternância Mensagens/Servidor
+const app = document.getElementById("app");
+
 document.querySelectorAll(".rail-item.home, .rail-item.server").forEach((s) => {
   s.addEventListener("click", () => {
     document.querySelectorAll(".rail-item").forEach((r) => r.classList.remove("active"));
     s.classList.add("active");
+
+    if (s.classList.contains("home")) {
+      app.classList.add("dm-mode"); // tela de Mensagens (DMs)
+    } else {
+      app.classList.remove("dm-mode"); // tela do servidor
+    }
   });
 });
+
+// Começa na tela de Mensagens (logo Nimo ativa)
+if (document.querySelector(".rail-item.home.active")) {
+  app.classList.add("dm-mode");
+}
 
 // Reações (visual)
 document.querySelectorAll(".reaction:not(.add)").forEach((r) => {

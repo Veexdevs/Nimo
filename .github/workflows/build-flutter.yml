@@ -1,0 +1,98 @@
+name: Gerar Nimo (Flutter)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "lib/**"
+      - "assets/**"
+      - "pubspec.yaml"
+      - ".github/workflows/build-flutter.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flutter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Montar projeto
+        run: |
+          flutter create nimo_build --org com.veexdevs --project-name nimo --platforms web,android
+          rm -rf nimo_build/lib nimo_build/test
+          cp -r lib nimo_build/lib
+          cp pubspec.yaml nimo_build/pubspec.yaml
+          cp -r assets nimo_build/assets
+          # Permissão de internet no APK de release (necessária para o banco de dados)
+          MANIFEST=nimo_build/android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.INTERNET" "$MANIFEST" || \
+            sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' "$MANIFEST"
+          cat "$MANIFEST" | head -5
+
+      - name: Compilar (APK + Web)
+        shell: bash
+        working-directory: nimo_build
+        run: |
+          set -o pipefail
+          {
+            flutter pub get
+            dart run flutter_launcher_icons || echo "AVISO: geração de ícones falhou, seguindo com ícone padrão"
+            flutter build apk --release
+            flutter build web --release
+          } 2>&1 | tee /tmp/flutter.log
+
+      - name: Publicar erro como comentário (debug)
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tail -c 60000 /tmp/flutter.log > /tmp/flutter_tail.log || echo "sem log" > /tmp/flutter_tail.log
+          BODY=$(printf 'Falha no build Flutter:\n```\n%s\n```' "$(cat /tmp/flutter_tail.log)")
+          gh api repos/${{ github.repository }}/commits/${{ github.sha }}/comments -f body="$BODY" || true
+
+      - name: Publicar APK na Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp nimo_build/build/app/outputs/flutter-apk/app-release.apk Nimo.apk
+          gh release create apk --title "Nimo APK (Android)" --notes "APK mais recente do Nimo (Flutter). Baixe o Nimo.apk abaixo e instale no Android." || true
+          gh release edit apk --notes "APK mais recente do Nimo (Flutter). Baixe o Nimo.apk abaixo e instale no Android (ative 'Instalar apps desconhecidos' se precisar)." || true
+          gh release upload apk Nimo.apk --clobber
+
+      - name: Publicar build web na branch web-dist
+        run: |
+          mkdir -p /tmp/webdist/app
+          cp -r nimo_build/build/web/. /tmp/webdist/app/
+          cd /tmp/webdist
+          git init -b web-dist
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Build web Flutter (${GITHUB_SHA})"
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" web-dist
+
+      - name: Guardar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nimo-apk
+          path: Nimo.apk

@@ -1,0 +1,32 @@
+name: nimo
+description: "Nimo — chat em tempo real (web, mobile e desktop)"
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_animate: ^4.5.0
+  google_fonts: ^6.2.1
+  image_picker: ^1.1.2
+  supabase_flutter: ^2.9.0
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo-icon.png
+    - assets/logo-full.png
+    - assets/avatars/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo-icon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/logo-icon.png"

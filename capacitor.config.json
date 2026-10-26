@@ -1,9 +1,0 @@
-{
-  "appId": "com.veexdevs.nimo",
-  "appName": "Nimo",
-  "webDir": "app",
-  "backgroundColor": "#000000",
-  "android": {
-    "backgroundColor": "#000000"
-  }
-}
