@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'data.dart';
 import 'theme.dart';
@@ -25,18 +24,24 @@ class NimoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: NimoColors.black,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: NimoColors.blue,
+        brightness: Brightness.dark,
+        surface: NimoColors.black,
+      ),
+      splashFactory: InkRipple.splashFactory,
+    );
+
     return MaterialApp(
       title: 'Nimo',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: NimoColors.black,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: NimoColors.blue,
-          brightness: Brightness.dark,
-        ),
+      theme: base.copyWith(
+        textTheme: GoogleFonts.interTextTheme(base.textTheme),
       ),
       home: const HomeScreen(),
     );
@@ -52,8 +57,14 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: NimoColors.black,
       body: SafeArea(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: const [
             ServerRail(),
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: NimoColors.hairline,
+            ),
             Expanded(child: MessagesPanel()),
           ],
         ),
@@ -62,9 +73,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// ============================================================
-/// Escala suave ao pressionar (Motion)
-/// ============================================================
+/// Escala suave ao pressionar
 class Pressable extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -85,8 +94,8 @@ class _PressableState extends State<Pressable> {
       onTapUp: (_) => setState(() => _down = false),
       onTap: widget.onTap,
       child: AnimatedScale(
-        scale: _down ? 0.92 : 1.0,
-        duration: const Duration(milliseconds: 120),
+        scale: _down ? 0.93 : 1.0,
+        duration: const Duration(milliseconds: 110),
         curve: Curves.easeOut,
         child: widget.child,
       ),
@@ -94,61 +103,8 @@ class _PressableState extends State<Pressable> {
   }
 }
 
-/// Bolinha de presença (online, ausente, dnd, offline)
-class PresenceDot extends StatelessWidget {
-  final Presence presence;
-  final double size;
-  final Color ringColor;
-  const PresenceDot({
-    super.key,
-    required this.presence,
-    this.size = 13,
-    this.ringColor = NimoColors.bgDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: presenceColor(presence),
-        border: Border.all(color: ringColor, width: 2.5),
-      ),
-    );
-  }
-}
-
-/// Tag/insígnia ao lado do nome (ex.: 🎮 SynC)
-class ChipTag extends StatelessWidget {
-  final String label;
-  final bool bot;
-  const ChipTag({super.key, required this.label, this.bot = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: bot ? NimoColors.blue : NimoColors.bgElevated,
-        borderRadius: BorderRadius.circular(6),
-        border: bot ? null : Border.all(color: NimoColors.borderSoft),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
 /// ============================================================
-/// BARRA DE SERVIDORES (esquerda)
+/// BARRA DE SERVIDORES
 /// ============================================================
 class ServerRail extends StatefulWidget {
   const ServerRail({super.key});
@@ -158,76 +114,71 @@ class ServerRail extends StatefulWidget {
 }
 
 class _ServerRailState extends State<ServerRail> {
-  int _selected = -1; // -1 = Início (Mensagens)
+  int _selected = -1;
 
   @override
   Widget build(BuildContext context) {
     final items = <Widget>[
-      // Início (logo Nimo)
+      // Início — Mensagens
       Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 18),
         child: Pressable(
           onTap: () => setState(() => _selected = -1),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 48,
-            height: 48,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              color: _selected == -1 ? NimoColors.blue : NimoColors.bgElevated,
-              borderRadius: BorderRadius.circular(_selected == -1 ? 16 : 24),
+              color: _selected == -1
+                  ? NimoColors.blue
+                  : const Color(0xFF15151A),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.chat_bubble, color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.chat_bubble,
+              color: Colors.white,
+              size: 26,
+            ),
           ),
         ),
       ),
-      Container(
-        width: 32,
-        height: 2,
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A24),
-          borderRadius: BorderRadius.circular(1),
-        ),
-      ),
-      // Servidores
       for (int i = 0; i < servers.length; i++)
         Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: _RailServer(
-            item: servers[i],
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _ServerTileView(
+            tile: servers[i],
             selected: _selected == i,
             onTap: () => setState(() => _selected = i),
           ),
         ),
-      const SizedBox(height: 4),
-      _RailAction(icon: Icons.search, onTap: () {}),
-      const SizedBox(height: 8),
-      _RailAction(icon: Icons.add, onTap: () {}),
-      const SizedBox(height: 12),
+      const SizedBox(height: 6),
+      _RailCircle(icon: Icons.search, onTap: () {}),
+      const SizedBox(height: 14),
+      _RailCircle(icon: Icons.add, onTap: () {}),
+      const SizedBox(height: 10),
     ];
 
-    return Container(
-      width: 72,
-      color: NimoColors.black,
+    return SizedBox(
+      width: 86,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Column(
           children: items
-              .animate(interval: 40.ms)
-              .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-              .slideX(begin: -0.6, duration: 350.ms, curve: Curves.easeOutCubic),
+              .animate(interval: 35.ms)
+              .fadeIn(duration: 260.ms, curve: Curves.easeOut)
+              .slideX(begin: -0.5, duration: 320.ms, curve: Curves.easeOutCubic),
         ),
       ),
     );
   }
 }
 
-class _RailServer extends StatelessWidget {
-  final ServerItem item;
+class _ServerTileView extends StatelessWidget {
+  final ServerTile tile;
   final bool selected;
   final VoidCallback onTap;
-  const _RailServer({
-    required this.item,
+  const _ServerTileView({
+    required this.tile,
     required this.selected,
     required this.onTap,
   });
@@ -241,49 +192,59 @@ class _RailServer extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 48,
-            height: 48,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: item.gradient,
+              color: tile.bg,
+              borderRadius:
+                  BorderRadius.circular(selected ? 16 : tile.radius),
+              border: Border.all(
+                color: selected
+                    ? NimoColors.blueBright
+                    : (tile.bordered
+                        ? const Color(0xFF26262B)
+                        : Colors.transparent),
+                width: selected ? 2 : 1,
               ),
-              borderRadius: BorderRadius.circular(selected ? 16 : 24),
-              border: selected
-                  ? Border.all(color: Colors.white, width: 2)
-                  : null,
             ),
             alignment: Alignment.center,
-            child: Text(
-              item.label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
+            child: tile.icon != null
+                ? Icon(tile.icon, color: tile.fg, size: 26)
+                : Text(
+                    tile.text ?? '',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: tile.fg,
+                      fontSize: tile.fontSize,
+                      fontWeight: FontWeight.w900,
+                      fontStyle:
+                          tile.italic ? FontStyle.italic : FontStyle.normal,
+                      letterSpacing: 0.2,
+                      height: 1,
+                    ),
+                  ),
           ),
-          if (item.badge > 0)
+          if (tile.badge > 0)
             Positioned(
-              bottom: -3,
-              right: -3,
+              bottom: -4,
+              right: -4,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                height: 19,
-                constraints: const BoxConstraints(minWidth: 19),
+                height: 22,
+                constraints: const BoxConstraints(minWidth: 22),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 decoration: BoxDecoration(
-                  color: NimoColors.red,
-                  borderRadius: BorderRadius.circular(10),
+                  color: NimoColors.redBadge,
+                  borderRadius: BorderRadius.circular(11),
                   border: Border.all(color: NimoColors.black, width: 3),
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  '${item.badge}',
+                  '${tile.badge}',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
+                    height: 1,
                   ),
                 ),
               ),
@@ -294,23 +255,24 @@ class _RailServer extends StatelessWidget {
   }
 }
 
-class _RailAction extends StatelessWidget {
+class _RailCircle extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _RailAction({required this.icon, required this.onTap});
+  const _RailCircle({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Pressable(
       onTap: onTap,
       child: Container(
-        width: 48,
-        height: 48,
-        decoration: const BoxDecoration(
-          color: NimoColors.bgElevated,
+        width: 54,
+        height: 54,
+        decoration: BoxDecoration(
+          color: const Color(0xFF131317),
           shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF222227)),
         ),
-        child: Icon(icon, color: NimoColors.textNormal, size: 22),
+        child: Icon(icon, color: Colors.white, size: 25),
       ),
     );
   }
@@ -324,25 +286,18 @@ class MessagesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: const BoxDecoration(
-        color: NimoColors.bgDark,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(14)),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              _Header(),
-              StatusRow(),
-              Expanded(child: DmList()),
-            ],
-          ),
-          const Positioned(left: 12, right: 12, bottom: 12, child: MeBar()),
-        ],
-      ),
+    return Stack(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            _Header(),
+            StatusRow(),
+            Expanded(child: DmList()),
+          ],
+        ),
+        const Positioned(left: 10, right: 10, bottom: 10, child: MeBar()),
+      ],
     );
   }
 }
@@ -353,25 +308,26 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+      padding: const EdgeInsets.fromLTRB(22, 18, 20, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Mensagens',
-            style: TextStyle(
-              fontSize: 26,
+            style: GoogleFonts.inter(
+              fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: NimoColors.textNormal,
+              color: Colors.white,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _searchPill()),
-              const SizedBox(width: 10),
+              Expanded(child: _searchField()),
+              const SizedBox(width: 12),
               _CircleBtn(icon: Icons.person_add_alt_1, onTap: () {}),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               _CircleBtn(icon: Icons.add, onTap: () {}),
             ],
           ),
@@ -379,32 +335,38 @@ class _Header extends StatelessWidget {
       ),
     )
         .animate()
-        .fadeIn(duration: 350.ms)
-        .slideY(begin: -0.2, duration: 400.ms, curve: Curves.easeOutCubic);
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: -0.15, duration: 350.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _searchPill() {
+  Widget _searchField() {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0C0C12),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: NimoColors.border),
+        color: NimoColors.field,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFF1D1D22)),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.search, size: 20, color: NimoColors.textFaint),
-          SizedBox(width: 10),
+        children: [
+          const Icon(Icons.search, size: 24, color: NimoColors.textMuted),
+          const SizedBox(width: 12),
           Expanded(
             child: TextField(
               cursorColor: NimoColors.blueBright,
-              style: TextStyle(fontSize: 15.5, color: NimoColors.textNormal),
+              style: GoogleFonts.inter(
+                fontSize: 17,
+                color: NimoColors.textNormal,
+              ),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: 'Pesquisar...',
-                hintStyle: TextStyle(color: NimoColors.textFaint),
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 17,
+                  color: NimoColors.textFaint,
+                ),
               ),
             ),
           ),
@@ -424,21 +386,21 @@ class _CircleBtn extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 52,
+        height: 52,
         decoration: BoxDecoration(
-          color: NimoColors.bgElevated,
+          color: const Color(0xFF17171B),
           shape: BoxShape.circle,
-          border: Border.all(color: NimoColors.border),
+          border: Border.all(color: const Color(0xFF232328)),
         ),
-        child: Icon(icon, size: 20, color: NimoColors.textNormal),
+        child: Icon(icon, size: 23, color: Colors.white),
       ),
     );
   }
 }
 
 /// ============================================================
-/// FILEIRA DE STATUS (quem postou status)
+/// FILEIRA DE STATUS
 /// ============================================================
 class StatusRow extends StatelessWidget {
   const StatusRow({super.key});
@@ -448,22 +410,22 @@ class StatusRow extends StatelessWidget {
     final items = [
       for (final u in statusUsers)
         Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: StatusRing(user: u),
+          padding: const EdgeInsets.only(right: 20),
+          child: _StatusAvatar(user: u),
         ),
     ];
 
     return SizedBox(
-      height: 92,
+      height: 112,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 6, 6, 8),
+        padding: const EdgeInsets.fromLTRB(22, 12, 8, 8),
         children: items
-            .animate(interval: 70.ms, delay: 120.ms)
-            .fadeIn(duration: 300.ms)
+            .animate(interval: 60.ms, delay: 100.ms)
+            .fadeIn(duration: 280.ms)
             .scale(
-              begin: const Offset(0.5, 0.5),
-              duration: 450.ms,
+              begin: const Offset(0.7, 0.7),
+              duration: 380.ms,
               curve: Curves.easeOutBack,
             ),
       ),
@@ -471,81 +433,66 @@ class StatusRow extends StatelessWidget {
   }
 }
 
-class StatusRing extends StatelessWidget {
+class _StatusAvatar extends StatelessWidget {
   final StatusUser user;
-  const StatusRing({super.key, required this.user});
+  const _StatusAvatar({required this.user});
 
   @override
   Widget build(BuildContext context) {
-    Widget ring = Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: user.isNew
-            ? const SweepGradient(
-                colors: [
-                  NimoColors.green,
-                  NimoColors.greenLight,
-                  NimoColors.green,
-                ],
-              )
-            : null,
-        color: user.isNew ? null : NimoColors.ringSeen,
-      ),
-    );
-
-    // Anel girando para status novos (Motion)
-    if (user.isNew) {
-      ring = ring
-          .animate(onPlay: (c) => c.repeat())
-          .rotate(duration: 4.seconds);
-    }
+    final ringColor =
+        user.isNew ? NimoColors.greenLight : NimoColors.ringSeen;
 
     return Pressable(
       onTap: () {},
       child: SizedBox(
-        width: 76,
-        height: 76,
+        width: 88,
+        height: 88,
         child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Positioned.fill(child: ring),
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: NimoColors.bgDark,
-                  ),
-                  padding: const EdgeInsets.all(3),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: user.gradient,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      user.emoji,
-                      style: const TextStyle(fontSize: 26),
-                    ),
-                  ),
-                ),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: ringColor, width: 2.5),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: ClipOval(
+                child: Image.asset(user.avatar, fit: BoxFit.cover),
               ),
             ),
             Positioned(
-              bottom: 2,
-              right: 2,
+              bottom: 1,
+              right: 1,
               child: Container(
-                width: 17,
-                height: 17,
-                decoration: BoxDecoration(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: NimoColors.black,
                   shape: BoxShape.circle,
-                  color: user.isNew ? NimoColors.green : NimoColors.ringSeen,
-                  border: Border.all(color: NimoColors.bgDark, width: 3),
                 ),
+                alignment: Alignment.center,
+                child: user.isNew
+                    ? Container(
+                        width: 14,
+                        height: 14,
+                        decoration: const BoxDecoration(
+                          color: NimoColors.greenLight,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: NimoColors.ringSeen,
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
               ),
             ),
           ],
@@ -556,7 +503,7 @@ class StatusRing extends StatelessWidget {
 }
 
 /// ============================================================
-/// LISTA DE CONVERSAS (DMs)
+/// LISTA DE CONVERSAS
 /// ============================================================
 class DmList extends StatelessWidget {
   const DmList({super.key});
@@ -566,11 +513,11 @@ class DmList extends StatelessWidget {
     final tiles = [for (final c in dms) DmTile(chat: c)];
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 96),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 112),
       children: tiles
-          .animate(interval: 45.ms, delay: 200.ms)
-          .fadeIn(duration: 350.ms)
-          .slideY(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic),
+          .animate(interval: 40.ms, delay: 180.ms)
+          .fadeIn(duration: 300.ms)
+          .slideY(begin: 0.25, duration: 360.ms, curve: Curves.easeOutCubic),
     );
   }
 }
@@ -585,64 +532,43 @@ class DmTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {},
-        borderRadius: BorderRadius.circular(12),
-        hoverColor: Colors.white.withOpacity(0.04),
-        splashColor: NimoColors.blue.withOpacity(0.15),
-        highlightColor: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(14),
+        hoverColor: Colors.white.withOpacity(0.035),
+        splashColor: NimoColors.blue.withOpacity(0.12),
+        highlightColor: Colors.white.withOpacity(0.02),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _avatar(),
-              const SizedBox(width: 13),
+              _Avatar(chat: chat),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            chat.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                              fontStyle: chat.italic
-                                  ? FontStyle.italic
-                                  : FontStyle.normal,
-                              color: NimoColors.textNormal,
-                            ),
-                          ),
-                        ),
-                        if (chat.chip != null) ...[
-                          const SizedBox(width: 8),
-                          ChipTag(label: chat.chip!, bot: chat.botChip),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
+                    _nameRow(),
+                    const SizedBox(height: 4),
                     Text(
                       chat.preview,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13.5,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
                         color: NimoColors.textMuted,
+                        height: 1.2,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Padding(
-                padding: const EdgeInsets.only(top: 3),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   chat.time,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.5,
                     color: NimoColors.textFaint,
                   ),
                 ),
@@ -654,52 +580,241 @@ class DmTile extends StatelessWidget {
     );
   }
 
-  Widget _avatar() {
+  Widget _nameRow() {
+    final nameStyle = chat.serif
+        ? GoogleFonts.lora(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            fontStyle: FontStyle.italic,
+            color: Colors.white,
+          )
+        : GoogleFonts.inter(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -0.1,
+          );
+
+    final children = <Widget>[];
+
+    if (chat.medals) {
+      children.add(const Padding(
+        padding: EdgeInsets.only(right: 5),
+        child: Icon(Icons.military_tech, size: 18, color: NimoColors.amber),
+      ));
+    }
+
+    if (chat.devSup) {
+      children.add(Flexible(
+        child: Text.rich(
+          TextSpan(
+            text: chat.name,
+            style: nameStyle,
+            children: [
+              WidgetSpan(
+                alignment: PlaceholderAlignment.top,
+                child: Transform.translate(
+                  offset: const Offset(1, -2),
+                  child: Text(
+                    'dev',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: NimoColors.textMuted,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ));
+    } else {
+      children.add(Flexible(
+        child: Text(
+          chat.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: nameStyle,
+        ),
+      ));
+    }
+
+    if (chat.medals) {
+      children.add(const Padding(
+        padding: EdgeInsets.only(left: 5),
+        child: Icon(Icons.military_tech, size: 18, color: NimoColors.amber),
+      ));
+    }
+
+    if (chat.botTag) {
+      children.add(const SizedBox(width: 8));
+      children.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+        decoration: BoxDecoration(
+          color: NimoColors.blue,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check, size: 12, color: Colors.white),
+            const SizedBox(width: 3),
+            Text(
+              'APP',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    if (chat.tag != null) {
+      children.add(const SizedBox(width: 8));
+      children.add(TagChip(tag: chat.tag!));
+    }
+
+    return Row(children: children);
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  final DmChat chat;
+  const _Avatar({required this.chat});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget core;
+    if (chat.botAvatar) {
+      core = Container(
+        width: 54,
+        height: 54,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8373B),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.smart_toy, color: Colors.white, size: 28),
+      );
+    } else {
+      core = ClipOval(
+        child: Image.asset(
+          chat.avatar!,
+          width: 54,
+          height: 54,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
     return SizedBox(
-      width: 46,
-      height: 46,
+      width: 54,
+      height: 54,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          if (chat.logoAvatar)
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: NimoColors.black,
-                border: Border.all(color: NimoColors.blue),
-              ),
-              child: ClipOval(
-                child: Image.asset('assets/logo-icon.png', fit: BoxFit.cover),
-              ),
-            )
-          else
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: chat.gradient,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                chat.letter,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+          core,
           Positioned(
-            bottom: -1,
-            right: -1,
-            child: PresenceDot(presence: chat.presence),
+            bottom: -3,
+            right: -3,
+            child: _presenceBadge(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _presenceBadge() {
+    Widget inner;
+    switch (chat.presence) {
+      case Presence.online:
+        inner = Container(
+          width: 13,
+          height: 13,
+          decoration: const BoxDecoration(
+            color: NimoColors.greenLight,
+            shape: BoxShape.circle,
+          ),
+        );
+        break;
+      case Presence.idle:
+        inner = Container(
+          width: 13,
+          height: 13,
+          decoration: const BoxDecoration(
+            color: NimoColors.yellow,
+            shape: BoxShape.circle,
+          ),
+        );
+        break;
+      case Presence.dnd:
+        inner = Container(
+          width: 13,
+          height: 13,
+          decoration: const BoxDecoration(
+            color: NimoColors.red,
+            shape: BoxShape.circle,
+          ),
+        );
+        break;
+      case Presence.none:
+        inner = Container(
+          width: 13,
+          height: 13,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: NimoColors.ringSeen, width: 2.5),
+          ),
+        );
+        break;
+    }
+
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: const BoxDecoration(
+        color: NimoColors.black,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: inner,
+    );
+  }
+}
+
+/// Insígnia com ícone (sem emoji)
+class TagChip extends StatelessWidget {
+  final Tag tag;
+  const TagChip({super.key, required this.tag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: NimoColors.chipBg,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: NimoColors.chipBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tag.icon, size: 13, color: tag.iconColor),
+          const SizedBox(width: 4),
+          Text(
+            tag.label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: NimoColors.textNormal,
+              height: 1,
+            ),
           ),
         ],
       ),
@@ -708,113 +823,116 @@ class DmTile extends StatelessWidget {
 }
 
 /// ============================================================
-/// BARRA DO SEU PERFIL (flutuante, com blur)
+/// BARRA DO SEU PERFIL
 /// ============================================================
 class MeBar extends StatelessWidget {
   const MeBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-          decoration: BoxDecoration(
-            color: const Color(0xEB08080C),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: NimoColors.border),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: NimoColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: NimoColors.border),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipOval(
+                  child: Image.asset(
+                    'assets/avatars/av_denolk.jpg',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  bottom: -2,
+                  right: -2,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: NimoColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 13,
+                      height: 13,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: NimoColors.black,
-                        border: Border.all(color: NimoColors.blue),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/logo-icon.png',
-                          fit: BoxFit.cover,
+                        border: Border.all(
+                          color: NimoColors.ringSeen,
+                          width: 2.5,
                         ),
                       ),
                     ),
-                    const Positioned(
-                      bottom: -1,
-                      right: -1,
-                      child: PresenceDot(
-                        presence: Presence.offline,
-                        ringColor: Color(0xFF08080C),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: const [
-                        Flexible(
-                          child: Text(
-                            '『✝ Denolk ✝』',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: NimoColors.textNormal,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        ChipTag(label: '⚔️ snek'),
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.expand_more,
-                          size: 18,
-                          color: NimoColors.textMuted,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Invisível',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: NimoColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.notifications,
-                  color: NimoColors.textMuted,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '『✝ Denolk ✝』',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.unifrakturMaguntia(
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    const TagChip(tag: tagSnek),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 20,
+                      color: NimoColors.textMuted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Invisível',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5,
+                    color: NimoColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.notifications_none,
+              size: 26,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     )
         .animate()
-        .fadeIn(duration: 350.ms, delay: 400.ms)
-        .slideY(begin: 1.6, duration: 550.ms, curve: Curves.easeOutCubic);
+        .fadeIn(duration: 300.ms, delay: 350.ms)
+        .slideY(begin: 1.4, duration: 480.ms, curve: Curves.easeOutCubic);
   }
 }
