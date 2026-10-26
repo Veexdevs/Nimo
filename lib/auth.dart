@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'backend.dart';
 import 'theme.dart';
 import 'zoom.dart';
 
@@ -223,18 +224,44 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     FocusScope.of(context).unfocus();
 
     // valida apenas a etapa atual
     final ok = _stepKeys[_step].currentState?.validate() ?? true;
     if (!ok) return;
 
+    // checa no banco se o nome único está livre
+    if (_step == 1) {
+      setState(() => _loading = true);
+      var free = true;
+      try {
+        free = await usernameAvailable(_suUser.text.trim());
+      } catch (_) {
+        free = true; // sem conexão agora: o banco valida de novo no final
+      }
+      if (!mounted) return;
+      setState(() => _loading = false);
+      if (!free) {
+        _snack(
+            'O nome @${_suUser.text.trim()} já está em uso. Escolha outro.');
+        return;
+      }
+    }
+
     if (_step == 3) {
       _submitSignup();
       return;
     }
     _goStep(_step + 1);
+  }
+
+  void _finishAuth(String message) {
+    _snack(message);
+    final nav = Navigator.of(context);
+    if (nav.canPop()) {
+      nav.popUntil((r) => r.isFirst);
+    }
   }
 
   Future<void> _submitSignup() async {
@@ -257,11 +284,51 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 1400));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    _snack(
-        'Tudo certo por aqui! Os servidores do Nimo serão ligados em breve.');
+    try {
+      final b = _birth!;
+      final birthStr =
+          '${b.year.toString().padLeft(4, '0')}-${b.month.toString().padLeft(2, '0')}-${b.day.toString().padLeft(2, '0')}';
+
+      final res = await supa.auth.signUp(
+        email: _suEmail.text.trim(),
+        password: _suPass.text,
+        data: {
+          'username': _suUser.text.trim(),
+          'display_name': _suName.text.trim(),
+          'country': _country,
+          'birth_date': birthStr,
+        },
+      );
+
+      if (res.session == null) {
+        // servidor exigiu confirmação por e-mail
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _signup = false;
+          _step = 0;
+        });
+        _snack(
+            'Conta criada! Confirme o e-mail enviado para ${_suEmail.text.trim()} e depois entre.');
+        return;
+      }
+
+      // envia foto e banner (opcionais, sem travar o fluxo)
+      if (_avatarBytes != null) {
+        await uploadProfileImage(bytes: _avatarBytes!, banner: false);
+      }
+      if (_bannerBytes != null) {
+        await uploadProfileImage(bytes: _bannerBytes!, banner: true);
+      }
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _finishAuth('Conta criada! Bem-vindo(a) ao Nimo.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack(authErrorMessage(e));
+    }
   }
 
   Future<void> _submitLogin() async {
@@ -270,10 +337,19 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!ok) return;
 
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 1400));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    _snack('Os servidores do Nimo serão ligados em breve. Fique de olho!');
+    try {
+      await supa.auth.signInWithPassword(
+        email: _loginEmail.text.trim(),
+        password: _loginPass.text,
+      );
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _finishAuth('Bem-vindo(a) de volta!');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack(authErrorMessage(e));
+    }
   }
 
   void _handleBack() {

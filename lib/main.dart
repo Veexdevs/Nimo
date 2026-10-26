@@ -3,14 +3,21 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show Supabase, AuthState;
 
 import 'auth.dart';
+import 'backend.dart';
 import 'data.dart';
 import 'profile.dart';
 import 'theme.dart';
 import 'zoom.dart';
 
-void main() => runApp(const NimoApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  runApp(const NimoApp());
+}
 
 /// Permite arrastar listas com mouse/trackpad (web e desktop)
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -57,9 +64,15 @@ class NimoApp extends StatelessWidget {
       theme: base.copyWith(
         textTheme: GoogleFonts.interTextTheme(base.textTheme),
       ),
-      home: _isLoginHost
-          ? const AuthScreen(standalone: true)
-          : const HomeScreen(),
+      home: StreamBuilder<AuthState>(
+        stream: supa.auth.onAuthStateChange,
+        builder: (context, _) {
+          if (_isLoginHost && !isLoggedIn) {
+            return const AuthScreen(standalone: true);
+          }
+          return const HomeScreen();
+        },
+      ),
     );
   }
 }
@@ -368,8 +381,27 @@ class EmptyConversations extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Pressable(
-              onTap: () =>
-                  Navigator.of(context).push(authRoute(signup: true)),
+              onTap: () {
+                if (isLoggedIn) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: const Color(0xFF17171B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFF26262B)),
+                      ),
+                      content: Text(
+                        'A busca de amigos chega em breve!',
+                        style: GoogleFonts.inter(
+                            color: Colors.white, fontSize: 14.5),
+                      ),
+                    ),
+                  );
+                } else {
+                  Navigator.of(context).push(authRoute(signup: true));
+                }
+              },
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
@@ -413,13 +445,48 @@ class EmptyConversations extends StatelessWidget {
 }
 
 /// ============================================================
-/// BARRA DE PERFIL — visitante (sem conta), de ponta a ponta
+/// BARRA DE PERFIL — visitante ou conta logada
 /// ============================================================
-class GuestBar extends StatelessWidget {
+class GuestBar extends StatefulWidget {
   const GuestBar({super.key});
 
   @override
+  State<GuestBar> createState() => _GuestBarState();
+}
+
+class _GuestBarState extends State<GuestBar> {
+  NimoProfile? _profile;
+  late final _sub = supa.auth.onAuthStateChange.listen((_) => _load());
+
+  @override
+  void initState() {
+    super.initState();
+    _sub; // inicia a escuta
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (!isLoggedIn) {
+      if (mounted) setState(() => _profile = null);
+      return;
+    }
+    try {
+      final p = await fetchMyProfile();
+      if (mounted) setState(() => _profile = p);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final logged = isLoggedIn;
+    final p = _profile;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
       decoration: BoxDecoration(
@@ -444,16 +511,27 @@ class GuestBar extends StatelessWidget {
                   Container(
                     width: 64,
                     height: 64,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: const Color(0xFF17171B),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFF232328)),
                     ),
-                    child: const Icon(
-                      Icons.person_outline,
-                      size: 30,
-                      color: NimoColors.textMuted,
-                    ),
+                    child: (logged && p?.avatarUrl != null)
+                        ? Image.network(
+                            p!.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.person_outline,
+                              size: 30,
+                              color: NimoColors.textMuted,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person_outline,
+                            size: 30,
+                            color: NimoColors.textMuted,
+                          ),
                   ),
                   const SizedBox(width: 13),
                   Expanded(
@@ -462,7 +540,7 @@ class GuestBar extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Visitante',
+                          logged ? (p?.shownName ?? '...') : 'Visitante',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
@@ -473,7 +551,11 @@ class GuestBar extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Toque para ver seu perfil',
+                          logged
+                              ? '@${p?.username ?? ''}'
+                              : 'Toque para ver seu perfil',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: NimoColors.textMuted,
@@ -486,26 +568,28 @@ class GuestBar extends StatelessWidget {
               ),
             ),
           ),
-          Pressable(
-            onTap: () => Navigator.of(context).push(authRoute()),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              decoration: BoxDecoration(
-                color: NimoColors.blue,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Entrar',
-                style: GoogleFonts.inter(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+          if (!logged) ...[
+            Pressable(
+              onTap: () => Navigator.of(context).push(authRoute()),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                decoration: BoxDecoration(
+                  color: NimoColors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Entrar',
+                  style: GoogleFonts.inter(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 4),
+            const SizedBox(width: 4),
+          ],
           IconButton(
             onPressed: () {},
             icon: const Icon(

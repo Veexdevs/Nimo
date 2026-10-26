@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'auth.dart';
+import 'backend.dart';
 import 'theme.dart';
 import 'zoom.dart';
 
@@ -28,12 +29,34 @@ Route profileRoute() => PageRouteBuilder(
     );
 
 /// ============================================================
-/// Meu perfil (modo visitante — sem conta ainda)
+/// Meu perfil — visitante ou conta logada
 /// ============================================================
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  void _snack(BuildContext context, String msg) {
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  NimoProfile? _profile;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (!isLoggedIn) return;
+    try {
+      final p = await fetchMyProfile();
+      if (mounted) setState(() => _profile = p);
+    } catch (_) {}
+  }
+
+  void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -50,8 +73,35 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _signOut() async {
+    setState(() => _busy = true);
+    try {
+      await supa.auth.signOut();
+      if (!mounted) return;
+      Navigator.of(context).maybePop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      _snack('Não foi possível sair agora. Tente de novo.');
+    }
+  }
+
+  void _editTap() {
+    _snack(isLoggedIn
+        ? 'A edição de perfil chega em breve.'
+        : 'Crie uma conta para personalizar seu perfil.');
+  }
+
+  String _fmtDate(DateTime? d) {
+    if (d == null) return '—';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final logged = isLoggedIn;
+    final p = _profile;
+
     return Scaffold(
       backgroundColor: NimoColors.black,
       body: SafeArea(
@@ -67,7 +117,7 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _header(context),
+                        _header(p),
                         const SizedBox(height: 64),
                         Padding(
                           padding:
@@ -75,60 +125,82 @@ class ProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _identity(),
+                              _identity(logged, p),
                               const SizedBox(height: 22),
                               _card(
                                 title: 'MINHA CONTA',
-                                rows: const [
+                                rows: [
                                   _InfoRow(
                                     icon: Icons.person_outline,
                                     label: 'Nome de exibição',
-                                    value: 'Não definido',
+                                    value: logged
+                                        ? ((p?.displayName
+                                                    ?.trim()
+                                                    .isNotEmpty ??
+                                                false)
+                                            ? p!.displayName!
+                                            : 'Não definido')
+                                        : 'Não definido',
                                   ),
                                   _InfoRow(
                                     icon: Icons.alternate_email,
                                     label: 'Nome único',
-                                    value: 'Não definido',
+                                    value: logged
+                                        ? (p != null
+                                            ? '@${p.username}'
+                                            : '...')
+                                        : 'Não definido',
                                     note:
                                         'Pode ser alterado a cada 7 dias',
                                   ),
                                   _InfoRow(
                                     icon: Icons.mail_outline,
                                     label: 'E-mail',
-                                    value: '—',
+                                    value: logged
+                                        ? (p?.email ?? '—')
+                                        : '—',
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 14),
                               _card(
                                 title: 'SOBRE',
-                                rows: const [
+                                rows: [
                                   _InfoRow(
                                     icon: Icons.public,
                                     label: 'País',
-                                    value: '—',
+                                    value: logged
+                                        ? (p?.country ?? '—')
+                                        : '—',
                                   ),
                                   _InfoRow(
                                     icon: Icons.event_outlined,
                                     label: 'Membro desde',
-                                    value: '—',
+                                    value: logged
+                                        ? _fmtDate(p?.createdAt)
+                                        : '—',
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              _primaryButton(
-                                context,
-                                'Criar conta',
-                                () => Navigator.of(context)
-                                    .push(authRoute(signup: true)),
-                              ),
-                              const SizedBox(height: 12),
-                              _outlineButton(
-                                context,
-                                'Entrar',
-                                () => Navigator.of(context)
-                                    .push(authRoute()),
-                              ),
+                              if (logged) ...[
+                                _dangerButton(
+                                  _busy ? 'Saindo...' : 'Sair da conta',
+                                  _busy ? null : _signOut,
+                                ),
+                              ] else ...[
+                                _primaryButton(
+                                  'Criar conta',
+                                  () => Navigator.of(context)
+                                      .push(authRoute(signup: true)),
+                                ),
+                                const SizedBox(height: 12),
+                                _outlineButton(
+                                  'Entrar',
+                                  () => Navigator.of(context)
+                                      .push(authRoute()),
+                                ),
+                              ],
                               const SizedBox(height: 26),
                               Text(
                                 'Nimo • v0.1.0',
@@ -175,7 +247,7 @@ class ProfileScreen extends StatelessWidget {
   // ----------------------------------------------------------
   // Banner + avatar sobreposto
   // ----------------------------------------------------------
-  Widget _header(BuildContext context) {
+  Widget _header(NimoProfile? p) {
     return SizedBox(
       height: 208,
       child: Stack(
@@ -183,10 +255,10 @@ class ProfileScreen extends StatelessWidget {
         children: [
           // Banner
           GestureDetector(
-            onTap: () => _snack(
-                context, 'Crie uma conta para personalizar seu perfil.'),
+            onTap: _editTap,
             child: Container(
               height: 150,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -198,12 +270,24 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: _editBadge(),
-                ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (p?.bannerUrl != null)
+                    Image.network(
+                      p!.bannerUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const SizedBox.shrink(),
+                    ),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: _editBadge(),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -212,14 +296,14 @@ class ProfileScreen extends StatelessWidget {
             left: 20,
             top: 92,
             child: GestureDetector(
-              onTap: () => _snack(
-                  context, 'Crie uma conta para personalizar seu perfil.'),
+              onTap: _editTap,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Container(
                     width: 116,
                     height: 116,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: const Color(0xFF17171B),
                       borderRadius: BorderRadius.circular(26),
@@ -228,11 +312,21 @@ class ProfileScreen extends StatelessWidget {
                         width: 6,
                       ),
                     ),
-                    child: const Icon(
-                      Icons.person_outline,
-                      size: 52,
-                      color: NimoColors.textMuted,
-                    ),
+                    child: p?.avatarUrl != null
+                        ? Image.network(
+                            p!.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.person_outline,
+                              size: 52,
+                              color: NimoColors.textMuted,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person_outline,
+                            size: 52,
+                            color: NimoColors.textMuted,
+                          ),
                   ),
                   Positioned(
                     right: -4,
@@ -268,12 +362,12 @@ class ProfileScreen extends StatelessWidget {
   // ----------------------------------------------------------
   // Nome + status
   // ----------------------------------------------------------
-  Widget _identity() {
+  Widget _identity(bool logged, NimoProfile? p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Visitante',
+          logged ? (p?.shownName ?? '...') : 'Visitante',
           style: GoogleFonts.inter(
             fontSize: 26,
             fontWeight: FontWeight.w800,
@@ -291,7 +385,9 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(width: 5),
             Text(
-              'nome único não definido',
+              logged
+                  ? (p?.username ?? '...')
+                  : 'nome único não definido',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: NimoColors.textMuted,
@@ -299,42 +395,46 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: NimoColors.blue.withOpacity(0.10),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: NimoColors.blue.withOpacity(0.35)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.info_outline,
-                size: 15,
-                color: NimoColors.blueBright,
-              ),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  'Você ainda não tem uma conta no Nimo',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: NimoColors.blueBright,
+        if (!logged) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: NimoColors.blue.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: NimoColors.blue.withOpacity(0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  size: 15,
+                  color: NimoColors.blueBright,
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    'Você ainda não tem uma conta no Nimo',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: NimoColors.blueBright,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     ).animate().fadeIn(duration: 320.ms, delay: 60.ms);
   }
 
   // ----------------------------------------------------------
-  // Cartões de informação
+  // Cartões e botões
   // ----------------------------------------------------------
   Widget _card({required String title, required List<_InfoRow> rows}) {
     return Container(
@@ -363,8 +463,7 @@ class ProfileScreen extends StatelessWidget {
     ).animate().fadeIn(duration: 320.ms, delay: 120.ms);
   }
 
-  Widget _primaryButton(
-      BuildContext context, String label, VoidCallback onTap) {
+  Widget _primaryButton(String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -386,8 +485,7 @@ class ProfileScreen extends StatelessWidget {
     ).animate().fadeIn(duration: 320.ms, delay: 180.ms);
   }
 
-  Widget _outlineButton(
-      BuildContext context, String label, VoidCallback onTap) {
+  Widget _outlineButton(String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -408,6 +506,37 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn(duration: 320.ms, delay: 220.ms);
+  }
+
+  Widget _dangerButton(String label, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: NimoColors.red.withOpacity(0.55), width: 1.4),
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.logout, size: 18, color: NimoColors.red),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+                color: NimoColors.red,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 320.ms, delay: 180.ms);
   }
 }
 

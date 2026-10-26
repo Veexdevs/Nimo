@@ -43,6 +43,11 @@ jobs:
           cp -r lib nimo_build/lib
           cp pubspec.yaml nimo_build/pubspec.yaml
           cp -r assets nimo_build/assets
+          # Permissão de internet no APK de release (necessária para o banco de dados)
+          MANIFEST=nimo_build/android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.INTERNET" "$MANIFEST" || \
+            sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' "$MANIFEST"
+          cat "$MANIFEST" | head -5
 
       - name: Compilar (APK + Web)
         shell: bash
