@@ -1,0 +1,69 @@
+name: Gerar APK do Nimo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "app/**"
+      - "package.json"
+      - "capacitor.config.json"
+      - "resources/**"
+      - ".github/workflows/build-apk.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Criar projeto Android
+        run: npx cap add android
+
+      - name: Gerar ícones do app (logo Nimo)
+        continue-on-error: true
+        run: npx @capacitor/assets generate --android --assetPath resources --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000'
+
+      - name: Sincronizar
+        run: npx cap sync android
+
+      - name: Compilar APK (debug)
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: Renomear APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Nimo.apk
+
+      - name: Publicar na Release "Nimo APK"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create apk --title "Nimo APK (Android)" --notes "APK mais recente do Nimo. Baixe o arquivo Nimo.apk abaixo e instale no Android (ative 'Instalar apps desconhecidos' se precisar)." --target "${GITHUB_SHA}" || true
+          gh release upload apk Nimo.apk --clobber
+        working-directory: ${{ github.workspace }}
+
+      - name: Guardar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nimo-apk
+          path: Nimo.apk
