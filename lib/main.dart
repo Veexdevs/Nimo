@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -23,6 +24,16 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 class NimoApp extends StatelessWidget {
   const NimoApp({super.key});
 
+  /// true quando o app foi aberto pelo subdomínio de autenticação
+  /// (ex.: nimo-login.vercel.app ou login.nimo.com)
+  static bool get _isLoginHost {
+    if (!kIsWeb) return false;
+    final host = Uri.base.host.toLowerCase();
+    return host.startsWith('login.') ||
+        host.startsWith('nimo-login') ||
+        host.startsWith('login-nimo');
+  }
+
   @override
   Widget build(BuildContext context) {
     final base = ThemeData(
@@ -44,7 +55,9 @@ class NimoApp extends StatelessWidget {
       theme: base.copyWith(
         textTheme: GoogleFonts.interTextTheme(base.textTheme),
       ),
-      home: const HomeScreen(),
+      home: _isLoginHost
+          ? const AuthScreen(standalone: true)
+          : const HomeScreen(),
     );
   }
 }
