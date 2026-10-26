@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nimo</title>
+  <link rel="icon" type="image/png" href="assets/logo-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ BARRA DE SERVIDORES (esquerda) ============ -->
+    <nav class="server-rail">
+      <div class="rail-item home active" data-tooltip="Mensagens Diretas">
+        <img src="assets/logo-icon.png" alt="Nimo" class="rail-logo" />
+      </div>
+      <div class="rail-separator"></div>
+
+      <div class="rail-item server" data-tooltip="Nimo Brasil 🇧🇷">
+        <span class="server-initials">NB</span>
+        <span class="pill"></span>
+        <span class="badge">3</span>
+      </div>
+      <div class="rail-item server img-server" data-tooltip="Gamers Zone">
+        <span class="server-initials gz">GZ</span>
+      </div>
+      <div class="rail-item server" data-tooltip="Dev Squad">
+        <span class="server-initials ds">DS</span>
+        <span class="badge">12</span>
+      </div>
+      <div class="rail-item server" data-tooltip="Música 24/7">
+        <span class="server-initials mu">🎵</span>
+      </div>
+
+      <div class="rail-item action" data-tooltip="Adicionar um servidor">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rail-item action" data-tooltip="Explorar servidores">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.9 5.1-2.4 6.2-6.2 2.4 2.4-6.2 6.2-2.4ZM12 13.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z"/></svg>
+      </div>
+
+      <div class="rail-spacer"></div>
+
+      <div class="rail-item action download" data-tooltip="Baixar aplicativos">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      </div>
+    </nav>
+
+    <!-- ============ SIDEBAR DE CANAIS ============ -->
+    <aside class="channel-sidebar">
+      <header class="server-header">
+        <h1>Nimo Brasil 🇧🇷</h1>
+        <svg class="chevron" viewBox="0 0 24 24"><path fill="currentColor" d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </header>
+
+      <div class="channel-scroll">
+        <div class="boost-bar">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 4 7v10l8 5 8-5V7l-8-5Zm0 4.3L16.5 9 12 11.7 7.5 9 12 6.3Z"/></svg>
+          <span>Nível 2 · 14 impulsos</span>
+        </div>
+
+        <section class="channel-category">
+          <div class="category-header">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Boas-vindas</span>
+            <button class="cat-add" title="Criar canal">+</button>
+          </div>
+          <div class="channel"><span class="ch-icon">#</span><span class="ch-name">regras</span></div>
+          <div class="channel"><span class="ch-icon">#</span><span class="ch-name">anúncios</span><span class="ch-unread"></span></div>
+        </section>
+
+        <section class="channel-category">
+          <div class="category-header">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Canais de texto</span>
+            <button class="cat-add" title="Criar canal">+</button>
+          </div>
+          <div class="channel active"><span class="ch-icon">#</span><span class="ch-name">geral</span>
+            <span class="ch-actions">
+              <svg viewBox="0 0 24 24" title="Convidar"><path fill="currentColor" d="M15 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm-3 5c-3.3 0-6 1.8-6 4v1h12v-1c0-2.2-2.7-4-6-4Zm8-6v2h2v2h-2v2h-2v-2h-2V9h2V7h2Z"/></svg>
+              <svg viewBox="0 0 24 24" title="Configurações"><path fill="currentColor" d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Zm7.4-2.6.1-.9-.1-.9 2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.6-.9L15 3.5h-4l-.4 2.6c-.6.2-1.1.5-1.6.9l-2.4-1-2 3.4 2 1.6-.1.9.1.9-2 1.6 2 3.4 2.4-1c.5.4 1 .7 1.6.9l.4 2.6h4l.4-2.6c.6-.2 1.1-.5 1.6-.9l2.4 1 2-3.4-2-1.6Z"/></svg>
+            </span>
+          </div>
+          <div class="channel"><span class="ch-icon">#</span><span class="ch-name">memes</span><span class="ch-unread"></span></div>
+          <div class="channel"><span class="ch-icon">#</span><span class="ch-name">clipes</span></div>
+          <div class="channel muted"><span class="ch-icon">#</span><span class="ch-name">off-topic</span></div>
+        </section>
+
+        <section class="channel-category">
+          <div class="category-header">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Canais de voz</span>
+            <button class="cat-add" title="Criar canal">+</button>
+          </div>
+          <div class="channel voice">
+            <span class="ch-icon">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5 6 9H3v6h3l5 4V5Zm5.5 7a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-8v2a6.5 6.5 0 0 1 0 12v2a8.5 8.5 0 0 0 0-16Z"/></svg>
+            </span>
+            <span class="ch-name">Lounge 🛋️</span>
+          </div>
+          <div class="voice-users">
+            <div class="voice-user"><span class="vu-avatar a1">L</span><span>Lua</span></div>
+            <div class="voice-user"><span class="vu-avatar a2">P</span><span>Pedrok</span><svg class="vu-muted" viewBox="0 0 24 24"><path fill="currentColor" d="M15 10V6a3 3 0 0 0-6 0v1.8l6 6V10Zm4 1h-1.7a5.3 5.3 0 0 1-.4 2l1.3 1.3c.5-1 .8-2.1.8-3.3ZM4.3 3 3 4.3l5 5V11a3 3 0 0 0 4.7 2.5l1.5 1.4a5.3 5.3 0 0 1-7.5-4H5c0 3.4 2.6 6.2 6 6.7V21h2v-3.4c.9-.1 1.7-.4 2.5-.9L19.7 21l1.3-1.3L4.3 3Z"/></svg></div>
+          </div>
+          <div class="channel voice">
+            <span class="ch-icon">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5 6 9H3v6h3l5 4V5Zm5.5 7a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-8v2a6.5 6.5 0 0 1 0 12v2a8.5 8.5 0 0 0 0-16Z"/></svg>
+            </span>
+            <span class="ch-name">Jogatina 🎮</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Painel do usuário -->
+      <footer class="user-panel">
+        <div class="user-info">
+          <div class="user-avatar">
+            <img src="assets/logo-icon.png" alt="avatar" />
+            <span class="status-dot online"></span>
+          </div>
+          <div class="user-names">
+            <span class="user-display">Você</span>
+            <span class="user-status">Online</span>
+          </div>
+        </div>
+        <div class="user-actions">
+          <button title="Microfone"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2Z"/></svg></button>
+          <button title="Fone de ouvido"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a8 8 0 0 0-8 8v6a3 3 0 0 0 3 3h2v-8H6v-1a6 6 0 0 1 12 0v1h-3v8h2a3 3 0 0 0 3-3v-6a8 8 0 0 0-8-8Z"/></svg></button>
+          <button title="Configurações"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Zm7.4-2.6.1-.9-.1-.9 2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.6-.9L15 3.5h-4l-.4 2.6c-.6.2-1.1.5-1.6.9l-2.4-1-2 3.4 2 1.6-.1.9.1.9-2 1.6 2 3.4 2.4-1c.5.4 1 .7 1.6.9l.4 2.6h4l.4-2.6c.6-.2 1.1-.5 1.6-.9l2.4 1 2-3.4-2-1.6Z"/></svg></button>
+        </div>
+      </footer>
+    </aside>
+
+    <!-- ============ ÁREA PRINCIPAL ============ -->
+    <main class="main-area">
+      <!-- Barra superior -->
+      <header class="chat-header">
+        <div class="chat-title">
+          <span class="ch-icon">#</span>
+          <h2>geral</h2>
+          <span class="divider-v"></span>
+          <span class="chat-topic">Converse sobre tudo um pouco · seja gente boa 💙</span>
+        </div>
+        <div class="chat-tools">
+          <button title="Tópicos"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M5.4 3 5 7h4l.4-4h2L11 7h4l.4-4h2L17 7h4v2h-4.2l-.6 6H20v2h-4l-.4 4h-2l.4-4H10l-.4 4h-2l.4-4H4v-2h4.2l.6-6H5V7h4l.4-4h-4Zm5.2 6-.6 6h4l.6-6h-4Z"/></svg></button>
+          <button title="Notificações"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm6-6v-5a6 6 0 0 0-4.5-5.8V4a1.5 1.5 0 0 0-3 0v1.2A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2Z"/></svg></button>
+          <button title="Mensagens fixadas"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 3v2l-1 1v5l3 3v2h-5v6l-1 1-1-1v-6H6v-2l3-3V6L8 5V3h8Z"/></svg></button>
+          <button title="Membros" class="active"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 2c-3.3 0-7 1.7-7 4v2h14v-2c0-2.3-3.7-4-7-4Zm8-2a3 3 0 1 0-2.2-5A5.5 5.5 0 0 1 15 9c0 .6-.1 1.2-.3 1.7.7.2 1.5.3 2.3.3Zm1.5 2.3c1.5.8 3.5 2 3.5 3.7v2h-4v-2c0-1.5-.6-2.7-1.5-3.7.7 0 1.4 0 2 0Z"/></svg></button>
+          <div class="search-box">
+            <input type="text" placeholder="Buscar" />
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5Zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Z"/></svg>
+          </div>
+          <button title="Caixa de entrada"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 11h-4a3 3 0 0 1-6 0H5V5h14v9Z"/></svg></button>
+          <button title="Ajuda"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 17h-2v-2h2v2Zm2.1-7.7-.9.9c-.7.8-1.2 1.4-1.2 2.8h-2v-.5c0-1.1.5-2.1 1.2-2.8l1.2-1.3c.4-.3.6-.8.6-1.4a2 2 0 0 0-4 0H8a4 4 0 0 1 8 0c0 .9-.4 1.7-.9 2.3Z"/></svg></button>
+        </div>
+      </header>
+
+      <div class="chat-body">
+        <!-- Mensagens -->
+        <section class="messages" id="messages">
+          <div class="channel-intro">
+            <div class="intro-icon">#</div>
+            <h3>Bem-vindo(a) a #geral!</h3>
+            <p>Este é o começo do canal #geral. Converse sobre tudo um pouco.</p>
+          </div>
+
+          <div class="date-divider"><span>26 de outubro de 2026</span></div>
+
+          <div class="message">
+            <span class="msg-avatar a1">L</span>
+            <div class="msg-content">
+              <div class="msg-header"><span class="msg-author c1">Lua</span><span class="msg-time">Hoje às 14:02</span></div>
+              <p>galera, alguém viu o update novo? 👀</p>
+            </div>
+          </div>
+
+          <div class="message">
+            <span class="msg-avatar a2">P</span>
+            <div class="msg-content">
+              <div class="msg-header"><span class="msg-author c2">Pedrok</span><span class="msg-time">Hoje às 14:05</span></div>
+              <p>vi sim!! ficou muito bom, o tema azul combinou demais 🔥</p>
+            </div>
+          </div>
+          <div class="message compact">
+            <span class="msg-time-hover">14:05</span>
+            <div class="msg-content"><p>depois a gente testa a chamada de voz</p></div>
+          </div>
+
+          <div class="message">
+            <span class="msg-avatar a3">R</span>
+            <div class="msg-content">
+              <div class="msg-header"><span class="msg-author c3">Rafa<span class="role-tag">ADM</span></span><span class="msg-time">Hoje às 14:10</span></div>
+              <p>Lembrete: evento de lançamento <strong>sexta às 20h</strong>! Não esqueçam 📅</p>
+              <div class="reactions">
+                <span class="reaction active">💙 <b>7</b></span>
+                <span class="reaction">🔥 <b>4</b></span>
+                <span class="reaction add">+</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="message">
+            <span class="msg-avatar nimo"><img src="assets/logo-icon.png" alt="Nimo" /></span>
+            <div class="msg-content">
+              <div class="msg-header"><span class="msg-author c4">Nimo<span class="bot-tag">✓ APP</span></span><span class="msg-time">Hoje às 14:12</span></div>
+              <p>Bem-vindo(a) ao servidor, <span class="mention">@Você</span>! Dê uma olhada em <span class="mention">#regras</span> para começar. 💙</p>
+            </div>
+          </div>
+
+          <div class="message">
+            <span class="msg-avatar a4">M</span>
+            <div class="msg-content">
+              <div class="msg-header"><span class="msg-author c5">Mari</span><span class="msg-time">Hoje às 14:20</span></div>
+              <p>bora pro Lounge? 🎧</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lista de membros -->
+        <aside class="members-sidebar">
+          <h4 class="members-role">Admin — 1</h4>
+          <div class="member">
+            <span class="m-avatar a3">R<span class="status-dot online"></span></span>
+            <div class="m-info"><span class="m-name c3">Rafa</span><span class="m-activity">Jogando Valorant</span></div>
+          </div>
+
+          <h4 class="members-role">Online — 4</h4>
+          <div class="member">
+            <span class="m-avatar a1">L<span class="status-dot online"></span></span>
+            <div class="m-info"><span class="m-name c1">Lua</span></div>
+          </div>
+          <div class="member">
+            <span class="m-avatar a2">P<span class="status-dot idle"></span></span>
+            <div class="m-info"><span class="m-name c2">Pedrok</span><span class="m-activity">Ouvindo música</span></div>
+          </div>
+          <div class="member">
+            <span class="m-avatar a4">M<span class="status-dot dnd"></span></span>
+            <div class="m-info"><span class="m-name c5">Mari</span></div>
+          </div>
+          <div class="member">
+            <span class="m-avatar nimo"><img src="assets/logo-icon.png" alt="" /><span class="status-dot online"></span></span>
+            <div class="m-info"><span class="m-name c4">Nimo <span class="bot-tag">✓ APP</span></span></div>
+          </div>
+
+          <h4 class="members-role">Offline — 2</h4>
+          <div class="member offline">
+            <span class="m-avatar a5">T<span class="status-dot offline"></span></span>
+            <div class="m-info"><span class="m-name">Thiago</span></div>
+          </div>
+          <div class="member offline">
+            <span class="m-avatar a6">B<span class="status-dot offline"></span></span>
+            <div class="m-info"><span class="m-name">Bia</span></div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Caixa de mensagem -->
+      <footer class="chat-input-wrap">
+        <div class="chat-input">
+          <button class="attach" title="Anexar arquivo">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2Z"/></svg>
+          </button>
+          <input id="messageInput" type="text" placeholder="Conversar em #geral" autocomplete="off" />
+          <div class="input-tools">
+            <button title="Presente"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M20 7h-2.2A3 3 0 0 0 15 3c-1.2 0-2.3.6-3 1.6A3.7 3.7 0 0 0 9 3a3 3 0 0 0-2.8 4H4a2 2 0 0 0-2 2v2h9V9h2v2h9V9a2 2 0 0 0-2-2ZM9 7a1 1 0 1 1 0-2c.9 0 1.6.8 1.9 2H9Zm6 0h-1.9c.3-1.2 1-2 1.9-2a1 1 0 1 1 0 2Zm-4 6v8H5a2 2 0 0 1-2-2v-6h8Zm10 0v6a2 2 0 0 1-2 2h-6v-8h8Z"/></svg></button>
+            <button title="GIF"><span class="gif-label">GIF</span></button>
+            <button title="Figurinhas"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9l7-7V5a2 2 0 0 0-2-2Zm-6 16v-5h5l-5 5Z"/></svg></button>
+            <button title="Emoji"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM8.5 8A1.5 1.5 0 1 1 7 9.5 1.5 1.5 0 0 1 8.5 8Zm7 0A1.5 1.5 0 1 1 14 9.5 1.5 1.5 0 0 1 15.5 8Zm-8.1 6h9.2A5 5 0 0 1 12 17a5 5 0 0 1-4.6-3Z"/></svg></button>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
