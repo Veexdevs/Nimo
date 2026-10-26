@@ -47,6 +47,155 @@
       </div>
     </nav>
 
+    <!-- ============ TELA DE MENSAGENS (DMs) ============ -->
+    <section class="dm-view">
+      <header class="dm-header">
+        <h1>Mensagens</h1>
+        <div class="dm-search-row">
+          <div class="dm-search">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5Zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Z"/></svg>
+            <input type="text" placeholder="Pesquisar..." />
+          </div>
+          <button class="dm-circle-btn" title="Adicionar amigo">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm-3 5c-3.3 0-6 1.8-6 4v1h12v-1c0-2.2-2.7-4-6-4Zm8-6v2h2v2h-2v2h-2v-2h-2V9h2V7h2Z"/></svg>
+          </button>
+          <button class="dm-circle-btn" title="Nova conversa">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Status (quem postou) -->
+      <div class="status-row">
+        <div class="status-item new"><span class="status-avatar sg1">🤖</span></div>
+        <div class="status-item new"><span class="status-avatar sg2">😎</span></div>
+        <div class="status-item new"><span class="status-avatar sg3">🐉</span></div>
+        <div class="status-item seen"><span class="status-avatar sg4">🖤</span></div>
+        <div class="status-item seen"><span class="status-avatar sg5">💜</span></div>
+        <div class="status-item seen"><span class="status-avatar sg6">👤</span></div>
+      </div>
+
+      <!-- Lista de conversas -->
+      <div class="dm-list">
+        <div class="dm-item">
+          <span class="dm-avatar a1">L<span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">Lua</span><span class="dm-chip">🌙 LUAR</span></div>
+            <p class="dm-preview">Lua: Amanhã nos se fala</p>
+          </div>
+          <span class="dm-time">33m</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar a2">P<span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">Pedrok.Dev</span><span class="dm-chip">🎮 SynC</span></div>
+            <p class="dm-preview">Você: Tá bom</p>
+          </div>
+          <span class="dm-time">6h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar nimo"><img src="assets/logo-icon.png" alt="" /><span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">Nimo</span><span class="dm-chip bot">✓ APP</span></div>
+            <p class="dm-preview">/convite | nimo.app</p>
+          </div>
+          <span class="dm-time">7h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar a4">D<span class="status-dot idle"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">Deltax</span></div>
+            <p class="dm-preview">Você: Vlw</p>
+          </div>
+          <span class="dm-time">8h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar sg3">T<span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">TLK777yt</span><span class="dm-chip">⚔️ RING</span></div>
+            <p class="dm-preview">TLK777yt: Slk... fd</p>
+          </div>
+          <span class="dm-time">9h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar sg2">N<span class="status-dot dnd"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">nossa<sup>dev</sup></span><span class="dm-chip">🧩 SynC</span></div>
+            <p class="dm-preview">NOSSA<sup>dev</sup>: Oloco</p>
+          </div>
+          <span class="dm-time">11h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar sg1">C<span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">CARDOSO</span><span class="dm-chip">🔧 SynC</span></div>
+            <p class="dm-preview">CARDOSO: Irei descansar tbm</p>
+          </div>
+          <span class="dm-time">22h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar a3">A<span class="status-dot offline"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">🏅 ARTHURX9</span></div>
+            <p class="dm-preview">ARTHURX9: 🏅 De qualquer for...</p>
+          </div>
+          <span class="dm-time">23h</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar a5">Q<span class="status-dot offline"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">Q_244</span><span class="dm-chip">💀 CMND</span></div>
+            <p class="dm-preview">Você: Tá entregue</p>
+          </div>
+          <span class="dm-time">2d</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar a6">S<span class="status-dot offline"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name dm-italic">Santzz</span></div>
+            <p class="dm-preview">Você: Dnd</p>
+          </div>
+          <span class="dm-time">2d</span>
+        </div>
+
+        <div class="dm-item">
+          <span class="dm-avatar sg5">C<span class="status-dot online"></span></span>
+          <div class="dm-texts">
+            <div class="dm-name-row"><span class="dm-name">CARLIX BR</span><span class="dm-chip">☠️ skull</span></div>
+            <p class="dm-preview">CARLIX BR: Se quiser deixar todas as fontes assi...</p>
+          </div>
+          <span class="dm-time">2d</span>
+        </div>
+      </div>
+
+      <!-- Barra do seu perfil -->
+      <footer class="dm-me-bar">
+        <div class="dm-me-left">
+          <span class="dm-avatar me"><img src="assets/logo-icon.png" alt="" /><span class="status-dot offline"></span></span>
+          <div class="dm-me-texts">
+            <div class="dm-name-row">
+              <span class="dm-me-name">『✝ 𝕯𝖊𝖓𝖔𝖑𝖐 ✝』</span>
+              <span class="dm-chip">⚔️ snek</span>
+              <svg class="dm-me-chevron" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <span class="dm-me-status">Invisível</span>
+          </div>
+        </div>
+        <button class="dm-circle-btn ghost" title="Notificações">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm6-6v-5a6 6 0 0 0-4.5-5.8V4a1.5 1.5 0 0 0-3 0v1.2A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2Z"/></svg>
+        </button>
+      </footer>
+    </section>
+
     <!-- ============ SIDEBAR DE CANAIS ============ -->
     <aside class="channel-sidebar">
       <header class="server-header">
