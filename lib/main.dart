@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'auth.dart';
 import 'data.dart';
 import 'theme.dart';
 
@@ -101,8 +102,13 @@ class HomeScreen extends StatelessWidget {
                   Expanded(child: MessagesPanel()),
                 ],
               ),
-              // Barra de perfil esticada de ponta a ponta
-              const Positioned(left: 0, right: 0, bottom: 0, child: GuestBar()),
+              // Barra de perfil flutuante (arredondada, sem encostar nas bordas)
+              const Positioned(
+                left: 14,
+                right: 14,
+                bottom: 14,
+                child: GuestBar(),
+              ),
             ],
           ),
         ),
@@ -377,7 +383,8 @@ class EmptyConversations extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Pressable(
-              onTap: () {},
+              onTap: () =>
+                  Navigator.of(context).push(authRoute(signup: true)),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
@@ -429,10 +436,18 @@ class GuestBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 12, 10, 12),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(16, 11, 10, 11),
+      decoration: BoxDecoration(
         color: NimoColors.surface,
-        border: Border(top: BorderSide(color: NimoColors.border)),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: NimoColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x99000000),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -478,7 +493,7 @@ class GuestBar extends StatelessWidget {
             ),
           ),
           Pressable(
-            onTap: () {},
+            onTap: () => Navigator.of(context).push(authRoute()),
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
