@@ -337,6 +337,56 @@ void nimoSnack(BuildContext context, String msg) {
 // ============================================================
 // FAIXA DE STATUS (fila horizontal na tela Mensagens)
 // ============================================================
+/// Anel do status dividido em pedaços: um arco por status.
+/// Verde = ainda não visto, cinza = já visto.
+class _SegmentRingPainter extends CustomPainter {
+  final List<bool> seen;
+  _SegmentRingPainter({required this.seen});
+
+  static const _green = Color(0xFF22C55E);
+  static const _gray = Color(0xFF3C3C44);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final n = seen.length;
+    if (n == 0) return;
+
+    final stroke = 2.8;
+    final rect = Rect.fromLTWH(
+      stroke / 2,
+      stroke / 2,
+      size.width - stroke,
+      size.height - stroke,
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    if (n == 1) {
+      paint.color = seen.first ? _gray : _green;
+      canvas.drawArc(rect, 0, 6.28318530718, false, paint);
+      return;
+    }
+
+    const full = 6.28318530718; // 2*pi
+    const gap = 0.16; // vão entre os pedaços (rad)
+    final sweep = (full / n) - gap;
+    var start = -1.5707963268 + gap / 2; // começa no topo
+    for (var i = 0; i < n; i++) {
+      paint.color = seen[i] ? _gray : _green;
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += sweep + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SegmentRingPainter old) =>
+      old.seen.length != seen.length ||
+      !List.generate(seen.length, (i) => old.seen[i] == seen[i])
+          .every((e) => e);
+}
+
 class StatusStrip extends StatefulWidget {
   const StatusStrip({super.key});
 
@@ -347,6 +397,7 @@ class StatusStrip extends StatefulWidget {
 class StatusStripState extends State<StatusStrip> {
   List<StatusGroup> _groups = [];
   bool _loading = true;
+  String? _myAvatar;
 
   @override
   void initState() {
@@ -360,6 +411,12 @@ class StatusStripState extends State<StatusStrip> {
       return;
     }
     try {
+      if (_myAvatar == null) {
+        try {
+          final p = await fetchMyProfile();
+          _myAvatar = p?.avatarUrl;
+        } catch (_) {}
+      }
       final g = await fetchStatusGroups();
       if (mounted) {
         setState(() {
@@ -381,13 +438,17 @@ class StatusStripState extends State<StatusStrip> {
     final others = _groups.where((g) => !g.isMine).toList();
 
     return SizedBox(
-      height: 112,
+      height: 122,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         children: [
-          _myTile(mine.isEmpty ? null : mine.first),
+          _createTile(),
           const SizedBox(width: 14),
+          if (mine.isNotEmpty) ...[
+            _groupTile(mine.first),
+            const SizedBox(width: 14),
+          ],
           for (final g in others) ...[
             _groupTile(g),
             const SizedBox(width: 14),
@@ -436,62 +497,54 @@ class StatusStripState extends State<StatusStrip> {
     );
   }
 
-  Widget _myTile(StatusGroup? mine) {
+  /// Botão de criar status (sempre visível)
+  Widget _createTile() {
     return GestureDetector(
       onTap: () async {
-        if (mine == null) {
-          await showStatusComposer(context);
-        } else {
-          await Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => StatusViewerScreen(group: mine),
-          ));
-        }
-        refresh();
-      },
-      onLongPress: () async {
         await showStatusComposer(context);
         refresh();
       },
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: mine != null
-                        ? NimoColors.blueBright
-                        : const Color(0xFF26262B),
-                    width: 2.4,
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: Stack(
+              children: [
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF26262B),
+                        width: 2.6,
+                      ),
+                    ),
+                    child: _avatarCircle(_myAvatar, size: 66),
                   ),
                 ),
-                child: _avatarCircle(
-                  mine?.avatarUrl,
-                  size: 62,
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: NimoColors.blue,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: NimoColors.black, width: 2),
+                Positioned(
+                  right: 1,
+                  bottom: 1,
+                  child: Container(
+                    width: 27,
+                    height: 27,
+                    decoration: BoxDecoration(
+                      color: NimoColors.blue,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: NimoColors.black, width: 2),
+                    ),
+                    child: const Icon(Icons.add,
+                        size: 17, color: Colors.white),
                   ),
-                  child:
-                      const Icon(Icons.add, size: 15, color: Colors.white),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 7),
           Text(
-            'Meu status',
+            'Criar status',
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
@@ -504,6 +557,10 @@ class StatusStripState extends State<StatusStrip> {
   }
 
   Widget _groupTile(StatusGroup g) {
+    // um pedaço do anel por status: verde = não visto, cinza = visto
+    final seen = g.items
+        .map((s) => g.isMine ? false : s.viewedByMe)
+        .toList();
     return GestureDetector(
       onTap: () async {
         await Navigator.of(context).push(MaterialPageRoute(
@@ -513,24 +570,21 @@ class StatusStripState extends State<StatusStrip> {
       },
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: g.allSeen
-                    ? const Color(0xFF34343C)
-                    : NimoColors.blueBright,
-                width: 2.4,
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: CustomPaint(
+              painter: _SegmentRingPainter(seen: seen),
+              child: Center(
+                child: _avatarCircle(g.avatarUrl, size: 66),
               ),
             ),
-            child: _avatarCircle(g.avatarUrl, size: 62),
           ),
           const SizedBox(height: 7),
           SizedBox(
-            width: 74,
+            width: 80,
             child: Text(
-              g.shownName,
+              g.isMine ? 'Meu status' : g.shownName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
