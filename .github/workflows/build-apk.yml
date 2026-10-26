@@ -46,7 +46,12 @@ jobs:
         run: npx cap sync android
 
       - name: Compilar APK (debug)
-        run: cd android && chmod +x gradlew && (./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/gradle.log)
+        shell: bash
+        run: |
+          set -o pipefail
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/gradle.log
 
       - name: Publicar erro como comentário (debug)
         if: failure()
