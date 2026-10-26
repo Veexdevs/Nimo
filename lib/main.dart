@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'auth.dart';
 import 'data.dart';
 import 'theme.dart';
+import 'zoom.dart';
 
 void main() => runApp(const NimoApp());
 
@@ -58,36 +59,6 @@ class NimoApp extends StatelessWidget {
       home: _isLoginHost
           ? const AuthScreen(standalone: true)
           : const HomeScreen(),
-    );
-  }
-}
-
-/// ============================================================
-/// Escala global — mantém o "zoom afastado" em qualquer tela
-/// ============================================================
-class ZoomFit extends StatelessWidget {
-  final Widget child;
-  const ZoomFit({super.key, required this.child});
-
-  /// Largura de referência do layout (quanto maior, mais "afastado")
-  static const designWidth = 640.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        final scale = (c.maxWidth / designWidth).clamp(0.45, 1.0);
-        if (scale >= 1.0) return child;
-        return FittedBox(
-          fit: BoxFit.fill,
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: designWidth,
-            height: c.maxHeight / scale,
-            child: child,
-          ),
-        );
-      },
     );
   }
 }
@@ -449,7 +420,7 @@ class GuestBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 11, 10, 11),
+      padding: const EdgeInsets.fromLTRB(16, 18, 10, 18),
       decoration: BoxDecoration(
         color: NimoColors.surface,
         borderRadius: BorderRadius.circular(22),

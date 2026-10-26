@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'theme.dart';
+import 'zoom.dart';
 
 /// Transição suave para a tela de autenticação
 Route authRoute({bool signup = false}) => PageRouteBuilder(
@@ -298,8 +299,10 @@ class _AuthScreenState extends State<AuthScreen> {
     return Scaffold(
       backgroundColor: NimoColors.black,
       body: SafeArea(
-        child: Stack(
-          children: [
+        child: ZoomFit(
+          designWidth: 520,
+          child: Stack(
+            children: [
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
@@ -367,7 +370,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -417,13 +421,6 @@ class _AuthScreenState extends State<AuthScreen> {
           height: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(inWizard ? 22 : 30),
-            boxShadow: [
-              BoxShadow(
-                color: NimoColors.blue.withOpacity(0.28),
-                blurRadius: 42,
-                spreadRadius: 2,
-              ),
-            ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Image.asset(
