@@ -130,19 +130,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _bioCard(logged, p),
                               const SizedBox(height: 14),
                               _card(
-                                title: 'MINHA CONTA',
-                                rows: [
-                                  _InfoRow(
-                                    icon: Icons.mail_outline,
-                                    label: 'E-mail',
-                                    value: logged
-                                        ? (p?.email ?? '—')
-                                        : '—',
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              _card(
                                 title: 'SOBRE',
                                 rows: [
                                   _InfoRow(
