@@ -8,8 +8,12 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 
 import 'auth.dart';
 import 'backend.dart';
+import 'chat.dart';
 import 'data.dart';
+import 'friends.dart';
 import 'profile.dart';
+import 'server.dart';
+import 'social.dart';
 import 'status.dart';
 import 'theme.dart';
 import 'weblinks.dart';
@@ -134,8 +138,67 @@ class _RedirectToAppState extends State<_RedirectToApp> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<NimoServer> _servers = [];
+  NimoServer? _selected;
+  late final _sub = supa.auth.onAuthStateChange.listen((_) => _loadServers());
+
+  @override
+  void initState() {
+    super.initState();
+    _sub;
+    _loadServers();
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadServers() async {
+    if (!isLoggedIn) {
+      if (mounted) {
+        setState(() {
+          _servers = [];
+          _selected = null;
+        });
+      }
+      return;
+    }
+    try {
+      final s = await fetchMyServers();
+      if (mounted) {
+        setState(() {
+          _servers = s;
+          if (_selected != null) {
+            final still =
+                s.where((x) => x.id == _selected!.id).toList();
+            _selected = still.isEmpty ? null : still.first;
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _addServer() async {
+    if (!isLoggedIn) {
+      goToAuth(context);
+      return;
+    }
+    final s = await showServerSheet(context);
+    if (s != null) {
+      await _loadServers();
+      if (mounted) setState(() => _selected = s);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,14 +210,39 @@ class HomeScreen extends StatelessWidget {
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: const [
-                  ServerRail(),
-                  VerticalDivider(
+                children: [
+                  ServerRail(
+                    servers: _servers,
+                    selectedId: _selected?.id,
+                    onHome: () => setState(() => _selected = null),
+                    onServer: (s) => setState(() => _selected = s),
+                    onAdd: _addServer,
+                    onSearch: () {
+                      if (!isLoggedIn) {
+                        goToAuth(context);
+                        return;
+                      }
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const FriendsScreen(startTab: 2),
+                      ));
+                    },
+                  ),
+                  const VerticalDivider(
                     width: 1,
                     thickness: 1,
                     color: NimoColors.hairline,
                   ),
-                  Expanded(child: MessagesPanel()),
+                  Expanded(
+                    child: _selected == null
+                        ? const MessagesPanel()
+                        : ServerPanel(
+                            server: _selected!,
+                            onExit: () {
+                              setState(() => _selected = null);
+                              _loadServers();
+                            },
+                          ),
+                  ),
                 ],
               ),
               // Barra de perfil flutuante (arredondada, sem encostar nas bordas)
@@ -206,34 +294,91 @@ class _PressableState extends State<Pressable> {
 /// BARRA DE SERVIDORES (sem servidores ainda)
 /// ============================================================
 class ServerRail extends StatelessWidget {
-  const ServerRail({super.key});
+  final List<NimoServer> servers;
+  final String? selectedId;
+  final VoidCallback onHome;
+  final ValueChanged<NimoServer> onServer;
+  final VoidCallback onAdd;
+  final VoidCallback onSearch;
+  const ServerRail({
+    super.key,
+    required this.servers,
+    required this.selectedId,
+    required this.onHome,
+    required this.onServer,
+    required this.onAdd,
+    required this.onSearch,
+  });
 
   @override
   Widget build(BuildContext context) {
     final items = <Widget>[
       // Início — Mensagens
       Padding(
-        padding: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.only(bottom: 14),
         child: Pressable(
-          onTap: () {},
+          onTap: onHome,
           child: Container(
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: NimoColors.blue,
+              color: selectedId == null
+                  ? NimoColors.blue
+                  : const Color(0xFF131317),
               borderRadius: BorderRadius.circular(16),
+              border: selectedId == null
+                  ? null
+                  : Border.all(color: const Color(0xFF222227)),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.chat_bubble,
-              color: Colors.white,
+              color:
+                  selectedId == null ? Colors.white : NimoColors.textMuted,
               size: 26,
             ),
           ),
         ),
       ),
-      _RailCircle(icon: Icons.search, onTap: () {}),
+      if (servers.isNotEmpty) ...[
+        Container(
+          width: 34,
+          height: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF222227),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        for (final s in servers)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Pressable(
+              onTap: () => onServer(s),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(19),
+                  border: Border.all(
+                    color: selectedId == s.id
+                        ? NimoColors.blueBright
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: NimoAvatar(
+                  name: s.name,
+                  url: s.iconUrl,
+                  size: 50,
+                  square: true,
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 4),
+      ],
+      _RailCircle(icon: Icons.search, onTap: onSearch),
       const SizedBox(height: 14),
-      _RailCircle(icon: Icons.add, onTap: () {}),
+      _RailCircle(icon: Icons.add, onTap: onAdd),
       const SizedBox(height: 10),
     ];
 
@@ -278,24 +423,49 @@ class _RailCircle extends StatelessWidget {
 /// ============================================================
 /// PAINEL DE MENSAGENS
 /// ============================================================
-class MessagesPanel extends StatelessWidget {
+class MessagesPanel extends StatefulWidget {
   const MessagesPanel({super.key});
+
+  @override
+  State<MessagesPanel> createState() => _MessagesPanelState();
+}
+
+class _MessagesPanelState extends State<MessagesPanel> {
+  final _listKey = GlobalKey<ConversationsListState>();
+
+  Future<void> _openFriends() async {
+    if (!isLoggedIn) {
+      goToAuth(context);
+      return;
+    }
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const FriendsScreen(),
+    ));
+    _listKey.currentState?.refresh();
+  }
+
+  Future<void> _newGroup() async {
+    final created = await showCreateGroupSheet(context);
+    if (created) _listKey.currentState?.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        _Header(),
-        StatusStrip(),
-        Expanded(child: EmptyConversations()),
+      children: [
+        _Header(onAddFriend: _openFriends, onNewGroup: _newGroup),
+        const StatusStrip(),
+        Expanded(child: ConversationsList(key: _listKey)),
       ],
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  final VoidCallback onAddFriend;
+  final VoidCallback onNewGroup;
+  const _Header({required this.onAddFriend, required this.onNewGroup});
 
   @override
   Widget build(BuildContext context) {
@@ -318,9 +488,9 @@ class _Header extends StatelessWidget {
             children: [
               Expanded(child: _searchField()),
               const SizedBox(width: 12),
-              _CircleBtn(icon: Icons.person_add_alt_1, onTap: () {}),
+              _CircleBtn(icon: Icons.person_add_alt_1, onTap: onAddFriend),
               const SizedBox(width: 12),
-              _CircleBtn(icon: Icons.add, onTap: () {}),
+              _CircleBtn(icon: Icons.add, onTap: onNewGroup),
             ],
           ),
         ],
@@ -388,117 +558,6 @@ class _CircleBtn extends StatelessWidget {
         child: Icon(icon, size: 23, color: Colors.white),
       ),
     );
-  }
-}
-
-/// ============================================================
-/// ESTADO VAZIO — nenhuma conta/conversa ainda
-/// ============================================================
-class EmptyConversations extends StatelessWidget {
-  const EmptyConversations({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 90),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF0E0E12),
-                border: Border.all(color: const Color(0xFF1D1D22)),
-              ),
-              child: const Icon(
-                Icons.chat_bubble_outline,
-                size: 40,
-                color: NimoColors.blueBright,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              'Nenhuma conversa ainda',
-              style: GoogleFonts.inter(
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Adicione amigos para começar a conversar.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14.5,
-                color: NimoColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Pressable(
-              onTap: () {
-                if (isLoggedIn) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: const Color(0xFF17171B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: Color(0xFF26262B)),
-                      ),
-                      content: Text(
-                        'A busca de amigos chega em breve!',
-                        style: GoogleFonts.inter(
-                            color: Colors.white, fontSize: 14.5),
-                      ),
-                    ),
-                  );
-                } else {
-                  goToAuth(context, signup: true);
-                }
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-                decoration: BoxDecoration(
-                  color: NimoColors.blue,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.person_add_alt_1,
-                      size: 19,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 9),
-                    Text(
-                      'Adicionar amigo',
-                      style: GoogleFonts.inter(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(duration: 400.ms, delay: 150.ms)
-        .scale(
-          begin: const Offset(0.92, 0.92),
-          duration: 450.ms,
-          curve: Curves.easeOutCubic,
-        );
   }
 }
 
